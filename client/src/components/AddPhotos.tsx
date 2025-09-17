@@ -54,8 +54,14 @@ export default function AddPhotos({ photos, onPhotosChange, maxPhotos = 6 }: Add
         formData.append('upload_preset', import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || '');
 
         const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
-        if (!cloudName) {
-          throw new Error('Cloudinary configuration missing. Please set VITE_CLOUDINARY_CLOUD_NAME environment variable.');
+        const uploadPreset = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
+        
+        if (!cloudName || cloudName === 'your_cloud_name_here') {
+          throw new Error('Cloudinary cloud name not configured. Please set VITE_CLOUDINARY_CLOUD_NAME in your .env file.');
+        }
+        
+        if (!uploadPreset || uploadPreset === 'your_upload_preset_here') {
+          throw new Error('Cloudinary upload preset not configured. Please set VITE_CLOUDINARY_UPLOAD_PRESET in your .env file.');
         }
 
         const response = await fetch(
