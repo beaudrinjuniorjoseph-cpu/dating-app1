@@ -127,9 +127,8 @@ function App() {
 
   const handleVIPSubscribe = (plan: 'monthly' | 'yearly') => {
     console.log('Subscribe to VIP:', plan);
-    setIsVIP(true);
-    setAppState('main');
-    setActiveTab('matches');
+    // External payment window has opened, user can complete payment there
+    // Don't automatically change app state - let user return manually
   };
 
   const handleUpdateProfile = (updates: Partial<Profile>) => {

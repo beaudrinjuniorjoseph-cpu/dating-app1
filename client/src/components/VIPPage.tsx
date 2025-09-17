@@ -235,8 +235,13 @@ export default function VIPPage({ onBack, onSubscribe, isVIP }: VIPPageProps) {
               <div className="space-y-3">
                 <Button 
                   className="w-full justify-start h-12 bg-blue-600 hover:bg-blue-700 text-white border-0"
-                  onClick={() => {
-                    window.open("https://paypal.me", "_blank");
+                  onClick={(e) => {
+                    console.log("PayPal button clicked");
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log("Opening PayPal URL:", "https://paypal.me");
+                    window.open("https://paypal.me", "_blank", "noopener,noreferrer");
+                    console.log("PayPal window opened, calling onSubscribe");
                     onSubscribe(selectedPlan);
                   }}
                   data-testid="button-paypal-subscribe"
@@ -255,8 +260,13 @@ export default function VIPPage({ onBack, onSubscribe, isVIP }: VIPPageProps) {
                 <Button 
                   variant="outline" 
                   className="w-full justify-start h-12"
-                  onClick={() => {
-                    window.open("https://wa.me/+13465015737", "_blank");
+                  onClick={(e) => {
+                    console.log("MonCash button clicked");
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log("Opening WhatsApp URL:", "https://wa.me/+13465015737");
+                    window.open("https://wa.me/+13465015737", "_blank", "noopener,noreferrer");
+                    console.log("MonCash window opened, calling onSubscribe");
                     onSubscribe(selectedPlan);
                   }}
                   data-testid="button-moncash-subscribe"
