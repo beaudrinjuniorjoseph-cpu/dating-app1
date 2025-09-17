@@ -3,6 +3,7 @@ import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { Heart, MessageCircle } from "lucide-react";
 
 // Components
 import LandingPage from "@/components/LandingPage";
@@ -156,7 +157,15 @@ function App() {
           </div>
         ) : (
           <div className="flex items-center justify-center h-screen pb-20">
-            <p className="text-muted-foreground">No more profiles to show!</p>
+            <div className="text-center space-y-4">
+              <Heart className="w-16 h-16 mx-auto text-muted-foreground" />
+              <div>
+                <h3 className="text-lg font-semibold mb-2">Start discovering people!</h3>
+                <p className="text-muted-foreground">
+                  New profiles will appear here when they join
+                </p>
+              </div>
+            </div>
           </div>
         );
 
@@ -177,19 +186,14 @@ function App() {
         return (
           <div className="pb-20">
             <div className="flex items-center justify-center h-screen">
-              <div className="text-center">
-                <h2 className="text-xl font-bold mb-2">Your Conversations</h2>
-                <p className="text-muted-foreground mb-4">
-                  Start chatting with your matches!
-                </p>
-                {matches.length > 0 && (
-                  <button
-                    onClick={() => handleStartChat(matches[0].id)}
-                    className="text-primary underline"
-                  >
-                    Chat with {matches[0].name}
-                  </button>
-                )}
+              <div className="text-center space-y-4">
+                <MessageCircle className="w-16 h-16 mx-auto text-muted-foreground" />
+                <div>
+                  <h3 className="text-lg font-semibold mb-2">No conversations yet</h3>
+                  <p className="text-muted-foreground">
+                    Match with someone to start chatting
+                  </p>
+                </div>
               </div>
             </div>
           </div>

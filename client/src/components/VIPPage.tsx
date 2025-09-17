@@ -56,14 +56,6 @@ const features = [
   }
 ];
 
-const gifts = [
-  { emoji: "🌹", name: "Rose", price: "$2" },
-  { emoji: "💎", name: "Diamond", price: "$5" },
-  { emoji: "🍾", name: "Champagne", price: "$3" },
-  { emoji: "🎁", name: "Gift Box", price: "$4" },
-  { emoji: "💫", name: "Star", price: "$1" },
-  { emoji: "❤️", name: "Heart", price: "$1" }
-];
 
 export default function VIPPage({ onBack, onSubscribe, isVIP }: VIPPageProps) {
   const [selectedPlan, setSelectedPlan] = useState<'monthly' | 'yearly'>('monthly');
@@ -153,33 +145,6 @@ export default function VIPPage({ onBack, onSubscribe, isVIP }: VIPPageProps) {
         })}
       </div>
 
-      {/* Virtual Gifts Preview */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <Gift className="w-5 h-5" />
-            <span>Virtual Gifts</span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-muted-foreground mb-4">
-            Send special gifts to make your matches smile
-          </p>
-          <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
-            {gifts.map((gift, index) => (
-              <div 
-                key={index}
-                className="text-center p-3 rounded-lg bg-muted hover-elevate cursor-pointer"
-                data-testid={`gift-${gift.name.toLowerCase()}`}
-              >
-                <div className="text-2xl mb-1">{gift.emoji}</div>
-                <div className="text-xs font-medium">{gift.name}</div>
-                <div className="text-xs text-muted-foreground">{gift.price}</div>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
 
       {!isVIP && (
         <>
