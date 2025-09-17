@@ -5,7 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { ArrowRight, Heart, Camera } from "lucide-react";
+import { ArrowRight, Heart } from "lucide-react";
+import AddPhotos from "@/components/AddPhotos";
 
 type OnboardingStep = 'gender' | 'age' | 'looking-for' | 'interests' | 'photos';
 
@@ -56,6 +57,13 @@ export default function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
       interests: prev.interests.includes(interest)
         ? prev.interests.filter(i => i !== interest)
         : [...prev.interests, interest]
+    }));
+  };
+
+  const handlePhotosChange = (photos: string[]) => {
+    setData(prev => ({
+      ...prev,
+      photos
     }));
   };
 
@@ -162,20 +170,11 @@ export default function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
           )}
 
           {currentStep === 'photos' && (
-            <div className="space-y-4">
-              <div className="text-center">
-                <div className="w-24 h-24 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Camera className="w-8 h-8 text-muted-foreground" />
-                </div>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Add photos to show your personality (you can do this later)
-                </p>
-                <Button variant="outline" className="w-full" data-testid="button-add-photos">
-                  <Camera className="w-4 h-4 mr-2" />
-                  Add Photos
-                </Button>
-              </div>
-            </div>
+            <AddPhotos
+              photos={data.photos}
+              onPhotosChange={handlePhotosChange}
+              maxPhotos={6}
+            />
           )}
 
           <Button 

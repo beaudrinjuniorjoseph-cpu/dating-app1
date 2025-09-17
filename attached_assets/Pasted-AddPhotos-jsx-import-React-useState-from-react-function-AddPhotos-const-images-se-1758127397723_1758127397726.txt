@@ -1,0 +1,99 @@
+AddPhotos.jsx
+
+
+import React, { useState } from "react";
+
+function AddPhotos() {
+  const [images, setImages] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  // Upload multiple images to Cloudinary
+  const uploadImage = async (e) => {
+    const files = e.target.files;
+    setLoading(true);
+
+    const uploadedImages = [];
+
+    for (let i = 0; i < files.length; i++) {
+      const data = new FormData();
+      data.append("file", files[i]);
+      data.append("upload_preset", process.env.REACT_APP_UPLOAD_PRESET);
+
+      try {
+        const res = await fetch(
+          `https://api.cloudinary.com/v1_1/${process.env.REACT_APP_CLOUDINARY_CLOUD_NAME}/image/upload`,
+          {
+            method: "POST",
+            body: data,
+          }
+        );
+
+        const result = await res.json();
+        uploadedImages.push(result.secure_url);
+      } catch (err) {
+        console.error("Upload failed:", err);
+      }
+    }
+
+    setImages([...images, ...uploadedImages]);
+    setLoading(false);
+  };
+
+  const handleCompleteSetup = () => {
+    if (images.length === 0) {
+      alert("Please add at least one photo!");
+      return;
+    }
+
+    // 👉 Here, save 'images' array (list of Cloudinary URLs) to your database
+    console.log("User photos:", images);
+
+    // Redirect to home page
+    window.location.href = "/home";
+  };
+
+  return (
+    <div style={{ textAlign: "center", padding: "20px", fontFamily: "Arial" }}>
+      <h2>💖 Add Your Photos</h2>
+      <p>You can upload multiple photos</p>
+
+      <input
+        type="file"
+        multiple
+        accept="image/*"
+        onChange={uploadImage}
+      />
+
+      {loading && <p>Uploading photos, please wait...</p>}
+
+      <div style={{ marginTop: "20px" }}>
+        {images.map((url, index) => (
+          <img
+            key={index}
+            src={url}
+            alt="Uploaded"
+            width="150"
+            style={{ margin: "10px", borderRadius: "8px" }}
+          />
+        ))}
+      </div>
+
+      <button
+        onClick={handleCompleteSetup}
+        style={{
+          marginTop: "20px",
+          padding: "10px 20px",
+          backgroundColor: "#ff4d6d",
+          color: "#fff",
+          border: "none",
+          borderRadius: "5px",
+          cursor: "pointer",
+        }}
+      >
+        ✅ Complete Setup
+      </button>
+    </div>
+  );
+}
+
+export default AddPhotos;
