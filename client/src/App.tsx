@@ -4,6 +4,8 @@ import { QueryClientProvider, useQuery } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Heart, MessageCircle } from "lucide-react";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 
 // Components
 import LandingPage from "@/components/LandingPage";
@@ -14,9 +16,10 @@ import ChatInterface from "@/components/ChatInterface";
 import ProfilePage from "@/components/ProfilePage";
 import VIPPage from "@/components/VIPPage";
 import Navigation from "@/components/Navigation";
+import LoginPage from "@/components/LoginPage";
 
 
-type AppState = 'landing' | 'onboarding' | 'main' | 'chat' | 'vip';
+type AppState = 'login' | 'landing' | 'onboarding' | 'main' | 'chat' | 'vip';
 
 interface OnboardingData {
   gender: string;
@@ -38,23 +41,26 @@ interface Message {
 
 // Inner App component that uses queries
 function AppContent() {
-  const [appState, setAppState] = useState<AppState>('landing');
+  const [appState, setAppState] = useState<AppState>('login');
   const [activeTab, setActiveTab] = useState('discover');
   const [currentProfile, setCurrentProfile] = useState<Profile | null>(null);
   const [userProfile, setUserProfile] = useState<Profile | null>(null);
   const [isVIP, setIsVIP] = useState(false);
   const [currentChatProfile, setCurrentChatProfile] = useState<Profile | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [authLoading, setAuthLoading] = useState(false);
+  const [authError, setAuthError] = useState<string>('');
 
   // Real data from backend
   const [currentProfileIndex, setCurrentProfileIndex] = useState(0);
   const [matches] = useState<Profile[]>([]);
   const [likes] = useState<Profile[]>([]);
-  const [messages] = useState<Message[]>([]);
+  const [messages, setMessages] = useState<Message[]>([]);
 
   // Load discovery profiles from API with proper typing
   const { data: profilesData } = useQuery<{ profiles: Profile[] }>({
     queryKey: ['/api/discovery'],
-    enabled: appState === 'main', // Only load when in main app
+    enabled: appState === 'main' && isAuthenticated, // Only load when authenticated and in main app
   });
 
   const profiles = profilesData?.profiles || [];
@@ -73,23 +79,35 @@ function AppContent() {
     setAppState('onboarding');
   };
 
-  const handleOnboardingComplete = (data: OnboardingData) => {
+  const handleOnboardingComplete = async (data: OnboardingData) => {
     console.log('Onboarding completed:', data);
     
-    // Create user profile from onboarding data
-    const newUserProfile: Profile = {
-      id: 'current-user',
-      name: 'You', // This could be collected in onboarding if needed
-      age: parseInt(data.age),
-      distance: 0,
-      bio: `Looking for ${data.lookingFor.toLowerCase()}. Interested in ${data.interests.slice(0, 3).join(', ')}.`,
-      interests: data.interests,
-      photos: data.photos,
-      isVerified: false
-    };
-    
-    setUserProfile(newUserProfile);
-    setAppState('main');
+    try {
+      const response = await fetch('/api/users/update', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'user-id': userProfile?.id || '',
+        },
+        body: JSON.stringify({
+          name: 'You',
+          age: parseInt(data.age),
+          bio: `Looking for ${data.lookingFor.toLowerCase()}. Interested in ${data.interests.slice(0, 3).join(', ')}.`,
+          interests: data.interests,
+          photos: data.photos,
+        }),
+      });
+      
+      if (response.ok) {
+        const updatedUser = await response.json();
+        setUserProfile(updatedUser);
+        setAppState('main');
+      } else {
+        console.error('Failed to update user profile');
+      }
+    } catch (error) {
+      console.error('Error updating profile:', error);
+    }
   };
 
   const handleLike = (profileId: string) => {
@@ -107,7 +125,6 @@ function AppContent() {
     if (nextIndex < profiles.length) {
       setCurrentProfileIndex(nextIndex);
     } else {
-      // No more profiles - reset to beginning for demo
       setCurrentProfileIndex(0);
     }
   };
@@ -120,9 +137,63 @@ function AppContent() {
     }
   };
 
-  const handleSendMessage = (content: string, type: 'text' | 'voice') => {
-    console.log('Send message:', { content, type });
-    // todo: remove mock functionality - implement actual message sending
+  const handleLogin = async (email: string) => {
+    setAuthLoading(true);
+    setAuthError('');
+    
+    try {
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Login failed');
+      }
+      
+      const userData = await response.json();
+      setUserProfile(userData);
+      setIsAuthenticated(true);
+      
+      if (userData.name && userData.age && userData.photos?.length > 0) {
+        setAppState('main');
+      } else {
+        setAppState('onboarding');
+      }
+    } catch (error) {
+      setAuthError('Failed to sign in. Please try again.');
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
+  const handleSendMessage = async (content: string, type: 'text' | 'voice') => {
+    try {
+      const response = await fetch('/api/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'user-id': userProfile?.id || '',
+        },
+        body: JSON.stringify({
+          content,
+          type,
+          recipientId: currentChatProfile?.id
+        }),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to send message');
+      }
+      
+      const newMessage = await response.json();
+      setMessages((prev: Message[]) => [...prev, newMessage]);
+    } catch (error) {
+      console.error('Error sending message:', error);
+    }
   };
 
   const handleTabChange = (tab: string) => {
@@ -149,9 +220,13 @@ function AppContent() {
   };
 
   const handleLogout = () => {
-    console.log('Logout clicked');
-    setAppState('landing');
+    setUserProfile(null);
+    setIsAuthenticated(false);
+    setAppState('login');
     setActiveTab('discover');
+    setMessages([]);
+    setCurrentProfile(null);
+    setCurrentChatProfile(null);
   };
 
   const renderMainContent = () => {
@@ -167,15 +242,14 @@ function AppContent() {
           </div>
         ) : (
           <div className="flex items-center justify-center h-screen pb-20">
-            <div className="text-center space-y-4">
-              <Heart className="w-16 h-16 mx-auto text-muted-foreground" />
-              <div>
-                <h3 className="text-lg font-semibold mb-2">Start discovering people!</h3>
-                <p className="text-muted-foreground">
-                  New profiles will appear here when they join
-                </p>
-              </div>
-            </div>
+            <Card className="p-8 text-center">
+              <Heart className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
+              <h3 className="text-lg font-semibold mb-2">No more profiles</h3>
+              <p className="text-muted-foreground mb-4">Check back later for new matches!</p>
+              <Button onClick={() => setCurrentProfileIndex(0)}>
+                Start Over
+              </Button>
+            </Card>
           </div>
         );
 
@@ -227,6 +301,16 @@ function AppContent() {
     }
   };
 
+  if (!isAuthenticated) {
+    return (
+      <LoginPage 
+        onLogin={handleLogin}
+        isLoading={authLoading}
+        error={authError}
+      />
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background">
       {appState === 'landing' && (
@@ -253,7 +337,7 @@ function AppContent() {
         <ChatInterface
           profile={currentChatProfile}
           messages={messages}
-          currentUserId="currentUser"
+          currentUserId={userProfile?.id || 'current-user'}
           onSendMessage={handleSendMessage}
           onBack={() => {
             setAppState('main');

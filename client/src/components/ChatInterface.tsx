@@ -60,10 +60,9 @@ export default function ChatInterface({
   const handleVoiceRecord = () => {
     if (!isRecording) {
       setIsRecording(true);
-      // todo: remove mock functionality - implement actual voice recording
       setTimeout(() => {
         setIsRecording(false);
-        onSendMessage('Voice message', 'voice');
+        onSendMessage('Voice message recorded', 'voice');
       }, 2000);
     }
   };

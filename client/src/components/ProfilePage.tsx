@@ -22,6 +22,7 @@ import {
   X
 } from "lucide-react";
 import { Profile } from "./SwipeCard";
+import AddPhotos from "./AddPhotos";
 
 interface ProfilePageProps {
   profile: Profile;
@@ -45,6 +46,7 @@ export default function ProfilePage({
   onLogout 
 }: ProfilePageProps) {
   const [isEditing, setIsEditing] = useState(false);
+  const [showAddPhotos, setShowAddPhotos] = useState(false);
   const [editData, setEditData] = useState({
     bio: profile.bio,
     interests: [...profile.interests]
@@ -78,9 +80,31 @@ export default function ProfilePage({
   };
 
   const handlePhotoUpload = () => {
-    // todo: remove mock functionality - implement actual photo upload
-    console.log('Photo upload clicked');
+    setShowAddPhotos(true);
   };
+
+  if (showAddPhotos) {
+    return (
+      <div className="container mx-auto p-4 max-w-2xl">
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-2xl font-bold">Add Photos</h1>
+          <Button
+            variant="outline"
+            onClick={() => setShowAddPhotos(false)}
+          >
+            Back to Profile
+          </Button>
+        </div>
+        <AddPhotos
+          photos={profile.photos}
+          onPhotosChange={(photos) => {
+            onUpdateProfile({ photos });
+            setShowAddPhotos(false);
+          }}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-2xl mx-auto p-4 space-y-6">

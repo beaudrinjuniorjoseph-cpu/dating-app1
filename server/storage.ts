@@ -73,7 +73,11 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
-    const [user] = await db.insert(users).values(insertUser).returning();
+    const userWithId = {
+      ...insertUser,
+      id: crypto.randomUUID()
+    };
+    const [user] = await db.insert(users).values(userWithId).returning();
     return user;
   }
 
@@ -108,13 +112,14 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createProfile(profile: InsertProfile & { userId: string }): Promise<Profile> {
-    const row: typeof profiles.$inferInsert = {
+    const row = {
       ...profile,
+      id: crypto.randomUUID(),
       userId: profile.userId,
       interests: profile.interests ?? [],
       photos: profile.photos ?? []
     };
-    const [newProfile] = await db.insert(profiles).values([row]).returning();
+    const [newProfile] = await db.insert(profiles).values(row).returning();
     return newProfile;
   }
 
@@ -157,7 +162,11 @@ export class DatabaseStorage implements IStorage {
 
   // Swipe operations
   async createSwipe(swipe: InsertSwipe): Promise<Swipe> {
-    const [newSwipe] = await db.insert(swipes).values(swipe).returning();
+    const swipeWithId = {
+      ...swipe,
+      id: crypto.randomUUID()
+    };
+    const [newSwipe] = await db.insert(swipes).values(swipeWithId).returning();
     return newSwipe;
   }
 
@@ -191,6 +200,7 @@ export class DatabaseStorage implements IStorage {
     const [smallerId, largerId] = [match.user1Id, match.user2Id].sort();
     const orderedMatch = {
       ...match,
+      id: crypto.randomUUID(),
       user1Id: smallerId,
       user2Id: largerId,
     };
@@ -246,7 +256,11 @@ export class DatabaseStorage implements IStorage {
 
   // Message operations
   async createMessage(message: InsertMessage): Promise<Message> {
-    const [newMessage] = await db.insert(messages).values(message).returning();
+    const messageWithId = {
+      ...message,
+      id: crypto.randomUUID()
+    };
+    const [newMessage] = await db.insert(messages).values(messageWithId).returning();
     
     // Update match's lastMessageAt
     await db
@@ -288,7 +302,11 @@ export class DatabaseStorage implements IStorage {
 
   // Subscription operations
   async createSubscription(subscription: InsertSubscription): Promise<Subscription> {
-    const [newSubscription] = await db.insert(subscriptions).values(subscription).returning();
+    const subscriptionWithId = {
+      ...subscription,
+      id: crypto.randomUUID()
+    };
+    const [newSubscription] = await db.insert(subscriptions).values(subscriptionWithId).returning();
     return newSubscription;
   }
 
