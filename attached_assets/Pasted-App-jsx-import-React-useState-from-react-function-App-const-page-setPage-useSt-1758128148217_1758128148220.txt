@@ -1,0 +1,170 @@
+App.jsx
+
+
+import React, { useState } from "react";
+
+function App() {
+  const [page, setPage] = useState("start");
+  const [userData, setUserData] = useState({});
+  const [photos, setPhotos] = useState([]);
+
+  // Handle onboarding answers
+  const handleOnboarding = (answers) => {
+    setUserData(answers);
+    setPage("addPhotos");
+  };
+
+  // Handle uploaded photos
+  const handlePhotos = (uploaded) => {
+    setPhotos(uploaded);
+    setPage("home");
+  };
+
+  return (
+    <div style={{ textAlign: "center", fontFamily: "Arial", padding: "20px" }}>
+      {page === "start" && (
+        <>
+          <h1>💖 Welcome to Spark</h1>
+          <button onClick={() => setPage("onboarding")}>Get Started</button>
+        </>
+      )}
+
+      {page === "onboarding" && (
+        <Onboarding onComplete={handleOnboarding} />
+      )}
+
+      {page === "addPhotos" && (
+        <AddPhotos onComplete={handlePhotos} />
+      )}
+
+      {page === "home" && (
+        <Home onChat={() => setPage("chat")} onVIP={() => setPage("vip")} />
+      )}
+
+      {page === "chat" && (
+        <Chat onBack={() => setPage("home")} />
+      )}
+
+      {page === "vip" && (
+        <VIP onBack={() => setPage("home")} />
+      )}
+    </div>
+  );
+}
+
+function Onboarding({ onComplete }) {
+  const [gender, setGender] = useState("");
+  const [age, setAge] = useState("");
+  const [goal, setGoal] = useState("");
+
+  const finish = () => {
+    if (!gender || !age || !goal) {
+      alert("Please answer all questions!");
+      return;
+    }
+    onComplete({ gender, age, goal });
+  };
+
+  return (
+    <div>
+      <h2>Onboarding</h2>
+      <p>What’s your gender?</p>
+      <button onClick={() => setGender("Male")}>Male</button>
+      <button onClick={() => setGender("Female")}>Female</button>
+
+      <p>Your age:</p>
+      <input type="number" onChange={(e) => setAge(e.target.value)} />
+
+      <p>What are you looking for?</p>
+      <button onClick={() => setGoal("Friendship")}>Friendship</button>
+      <button onClick={() => setGoal("Relationship")}>Relationship</button>
+
+      <br />
+      <button onClick={finish}>Continue</button>
+    </div>
+  );
+}
+
+function AddPhotos({ onComplete }) {
+  const [images, setImages] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  const uploadImage = async (e) => {
+    const files = e.target.files;
+    setLoading(true);
+    const uploaded = [];
+
+    for (let i = 0; i < files.length; i++) {
+      const data = new FormData();
+      data.append("file", files[i]);
+      data.append("upload_preset", process.env.REACT_APP_UPLOAD_PRESET);
+
+      const res = await fetch(
+        `https://api.cloudinary.com/v1_1/${process.env.REACT_APP_CLOUDINARY_CLOUD_NAME}/image/upload`,
+        {
+          method: "POST",
+          body: data,
+        }
+      );
+      const result = await res.json();
+      uploaded.push(result.secure_url);
+    }
+
+    setImages([...images, ...uploaded]);
+    setLoading(false);
+  };
+
+  return (
+    <div>
+      <h2>Upload Your Photos</h2>
+      <input type="file" multiple accept="image/*" onChange={uploadImage} />
+      {loading && <p>Uploading...</p>}
+      <div>
+        {images.map((url, i) => (
+          <img key={i} src={url} alt="Uploaded" width="120" style={{ margin: "10px" }} />
+        ))}
+      </div>
+      <button onClick={() => onComplete(images)}>✅ Complete Setup</button>
+    </div>
+  );
+}
+
+function Home({ onChat, onVIP }) {
+  return (
+    <div>
+      <h2>🔥 Start Swiping</h2>
+      <p>(Swipe cards will be here)</p>
+      <button onClick={onChat}>Go to Chat</button>
+      <button onClick={onVIP}>Go to VIP</button>
+    </div>
+  );
+}
+
+function Chat({ onBack }) {
+  return (
+    <div>
+      <h2>💬 Chat</h2>
+      <p>(Messaging system will be here)</p>
+      <button onClick={onBack}>Back</button>
+    </div>
+  );
+}
+
+function VIP({ onBack }) {
+  return (
+    <div>
+      <h2>🌟 VIP Subscription</h2>
+      <p>$15 / month</p>
+      <button onClick={() => window.open("https://paypal.me", "_blank")}>
+        Pay with PayPal
+      </button>
+      <button onClick={() => window.open("https://wa.me/509XXXXXXXX", "_blank")}>
+        Pay with MonCash (WhatsApp)
+      </button>
+      <br />
+      <button onClick={onBack}>Back</button>
+    </div>
+  );
+}
+
+export default App;
