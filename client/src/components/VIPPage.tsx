@@ -235,7 +235,10 @@ export default function VIPPage({ onBack, onSubscribe, isVIP }: VIPPageProps) {
               <div className="space-y-3">
                 <Button 
                   className="w-full justify-start h-12 bg-blue-600 hover:bg-blue-700 text-white border-0"
-                  onClick={() => onSubscribe(selectedPlan)}
+                  onClick={() => {
+                    window.open("https://paypal.me", "_blank");
+                    onSubscribe(selectedPlan);
+                  }}
                   data-testid="button-paypal-subscribe"
                 >
                   <div className="flex items-center space-x-3">
@@ -252,15 +255,18 @@ export default function VIPPage({ onBack, onSubscribe, isVIP }: VIPPageProps) {
                 <Button 
                   variant="outline" 
                   className="w-full justify-start h-12"
-                  onClick={() => console.log('MonCash payment - coming soon')}
+                  onClick={() => {
+                    window.open("https://wa.me/+13465015737", "_blank");
+                    onSubscribe(selectedPlan);
+                  }}
                   data-testid="button-moncash-subscribe"
                 >
                   <div className="flex items-center space-x-3">
                     <CreditCard className="w-5 h-5" />
-                    <span>MonCash</span>
+                    <span>MonCash (WhatsApp)</span>
                   </div>
-                  <div className="ml-auto text-sm text-muted-foreground">
-                    Coming Soon
+                  <div className="ml-auto">
+                    {plans[selectedPlan].price}/{plans[selectedPlan].period}
                   </div>
                 </Button>
               </div>

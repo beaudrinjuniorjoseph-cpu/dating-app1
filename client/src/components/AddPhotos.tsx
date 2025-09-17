@@ -48,22 +48,30 @@ export default function AddPhotos({ photos, onPhotosChange, maxPhotos = 6 }: Add
           throw new Error(`${file.name} is too large. Maximum size is 5MB.`);
         }
 
+        // Upload to Cloudinary
         const formData = new FormData();
         formData.append('file', file);
-        formData.append('directory', 'profile-photos');
+        formData.append('upload_preset', import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || '');
 
-        const response = await fetch('/api/upload', {
-          method: 'POST',
-          body: formData,
-        });
+        const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
+        if (!cloudName) {
+          throw new Error('Cloudinary configuration missing. Please set VITE_CLOUDINARY_CLOUD_NAME environment variable.');
+        }
+
+        const response = await fetch(
+          `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
+          {
+            method: 'POST',
+            body: formData,
+          }
+        );
 
         if (!response.ok) {
-          const error = await response.text();
-          throw new Error(`Failed to upload ${file.name}: ${error}`);
+          throw new Error(`Failed to upload ${file.name} to Cloudinary`);
         }
 
         const result = await response.json();
-        uploadedUrls.push(result.url);
+        uploadedUrls.push(result.secure_url);
         
         setUploadProgress(((i + 1) / files.length) * 100);
       }

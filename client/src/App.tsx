@@ -14,11 +14,6 @@ import ProfilePage from "@/components/ProfilePage";
 import VIPPage from "@/components/VIPPage";
 import Navigation from "@/components/Navigation";
 
-// Mock data - todo: remove mock functionality
-import profilePhoto1 from '@assets/generated_images/Profile_photo_woman_5e08a65b.png';
-import profilePhoto2 from '@assets/generated_images/Profile_photo_man_e9dc1d86.png';
-import profilePhoto3 from '@assets/generated_images/Profile_photo_woman_two_dae67ecf.png';
-import profilePhoto4 from '@assets/generated_images/Profile_photo_man_two_b11497d8.png';
 
 type AppState = 'landing' | 'onboarding' | 'main' | 'chat' | 'vip';
 
@@ -48,115 +43,12 @@ function App() {
   const [isVIP, setIsVIP] = useState(false);
   const [currentChatProfile, setCurrentChatProfile] = useState<Profile | null>(null);
 
-  // Mock data - todo: remove mock functionality
-  const mockProfiles: Profile[] = [
-    {
-      id: '1',
-      name: 'Emma',
-      age: 26,
-      distance: 3,
-      bio: 'Love hiking, good coffee, and spontaneous adventures. Looking for someone to explore the city with!',
-      interests: ['Travel', 'Photography', 'Coffee', 'Hiking', 'Music', 'Books'],
-      photos: [profilePhoto1, profilePhoto2],
-      isVerified: true
-    },
-    {
-      id: '2',
-      name: 'Alex',
-      age: 28,
-      distance: 5,
-      bio: 'Photographer and adventure seeker. Always up for new experiences and great conversations.',
-      interests: ['Photography', 'Travel', 'Art', 'Movies'],
-      photos: [profilePhoto2, profilePhoto1],
-      isVerified: false
-    },
-    {
-      id: '3',
-      name: 'Sarah',
-      age: 25,
-      distance: 2,
-      bio: 'Yoga instructor and foodie. Believe in living life to the fullest and spreading positive vibes.',
-      interests: ['Yoga', 'Cooking', 'Fitness', 'Books'],
-      photos: [profilePhoto3, profilePhoto4],
-      isVerified: true
-    }
-  ];
-
-  const mockMatches: Profile[] = [
-    {
-      id: '1',
-      name: 'Emma',
-      age: 26,
-      distance: 3,
-      bio: 'Love hiking and good coffee',
-      interests: ['Travel', 'Photography'],
-      photos: [profilePhoto1],
-      isVerified: true
-    },
-    {
-      id: '2',
-      name: 'Alex',
-      age: 28,
-      distance: 5,
-      bio: 'Photographer and adventure seeker',
-      interests: ['Photography', 'Travel'],
-      photos: [profilePhoto2],
-      isVerified: false
-    }
-  ];
-
-  const mockLikes: Profile[] = [
-    {
-      id: '3',
-      name: 'Sarah',
-      age: 25,
-      distance: 2,
-      bio: 'Yoga instructor and foodie',
-      interests: ['Yoga', 'Cooking'],
-      photos: [profilePhoto3],
-      isVerified: true
-    },
-    {
-      id: '4',
-      name: 'Mike',
-      age: 30,
-      distance: 7,
-      bio: 'Software engineer who loves music',
-      interests: ['Tech', 'Music'],
-      photos: [profilePhoto4],
-      isVerified: false
-    }
-  ];
-
-  const mockMessages: Message[] = [
-    {
-      id: '1',
-      senderId: '1',
-      content: 'Hey! Thanks for the match! 😊',
-      timestamp: new Date(Date.now() - 3600000),
-      type: 'text'
-    },
-    {
-      id: '2',
-      senderId: 'currentUser',
-      content: 'Hi Emma! I love your photos from your hiking trip!',
-      timestamp: new Date(Date.now() - 3300000),
-      type: 'text'
-    },
-    {
-      id: '3',
-      senderId: '1',
-      content: 'Thank you! Do you like hiking too? 🏔️',
-      timestamp: new Date(Date.now() - 3000000),
-      type: 'text'
-    }
-  ];
-
-  const [profiles] = useState<Profile[]>(mockProfiles);
+  // Initialize with empty data - will be populated from backend/onboarding
+  const [profiles] = useState<Profile[]>([]);
   const [currentProfileIndex, setCurrentProfileIndex] = useState(0);
-  const [matches] = useState<Profile[]>(mockMatches);
-  const [likes] = useState<Profile[]>(mockLikes);
-  const [messages] = useState<Message[]>(mockMessages);
+  const [matches] = useState<Profile[]>([]);
+  const [likes] = useState<Profile[]>([]);
+  const [messages] = useState<Message[]>([]);
 
   useEffect(() => {
     if (profiles.length > 0) {
@@ -164,21 +56,7 @@ function App() {
     }
   }, [profiles, currentProfileIndex]);
 
-  useEffect(() => {
-    // todo: remove mock functionality - create actual user profile from onboarding
-    if (!userProfile) {
-      setUserProfile({
-        id: 'current-user',
-        name: 'You',
-        age: 27,
-        distance: 0,
-        bio: 'Adventure seeker, coffee lover, and dog person. Always up for trying new restaurants or exploring hiking trails.',
-        interests: ['Travel', 'Photography', 'Coffee', 'Hiking', 'Music', 'Cooking'],
-        photos: [profilePhoto1, profilePhoto2],
-        isVerified: true
-      });
-    }
-  }, [userProfile]);
+  // User profile will be created from onboarding data
 
   const handleGetStarted = () => {
     setAppState('onboarding');
@@ -186,7 +64,20 @@ function App() {
 
   const handleOnboardingComplete = (data: OnboardingData) => {
     console.log('Onboarding completed:', data);
-    // todo: remove mock functionality - use actual onboarding data
+    
+    // Create user profile from onboarding data
+    const newUserProfile: Profile = {
+      id: 'current-user',
+      name: 'You', // This could be collected in onboarding if needed
+      age: parseInt(data.age),
+      distance: 0,
+      bio: `Looking for ${data.lookingFor.toLowerCase()}. Interested in ${data.interests.slice(0, 3).join(', ')}.`,
+      interests: data.interests,
+      photos: data.photos,
+      isVerified: false
+    };
+    
+    setUserProfile(newUserProfile);
     setAppState('main');
   };
 
