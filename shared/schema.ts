@@ -1,92 +1,85 @@
 import { sql, relations } from "drizzle-orm";
-import { pgTable, text, varchar, integer, boolean, timestamp, real, jsonb, uuid } from "drizzle-orm/pg-core";
+import { sqliteTable, text, integer, real } from "drizzle-orm/sqlite-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
 // Users table - core user data
-export const users = pgTable("users", {
-  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+export const users = sqliteTable("users", {
+  id: text("id").primaryKey(),
   email: text("email").unique(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
-  lastActiveAt: timestamp("last_active_at").defaultNow(),
-  isVIP: boolean("is_vip").default(false).notNull(),
-  vipExpiresAt: timestamp("vip_expires_at"),
+  createdAt: integer("created_at", { mode: 'timestamp' }).default(sql`(unixepoch())`).notNull(),
+  updatedAt: integer("updated_at", { mode: 'timestamp' }).default(sql`(unixepoch())`).notNull(),
+  lastActiveAt: integer("last_active_at", { mode: 'timestamp' }).default(sql`(unixepoch())`),
+  isVIP: integer("is_vip", { mode: 'boolean' }).default(false).notNull(),
+  vipExpiresAt: integer("vip_expires_at", { mode: 'timestamp' }),
 });
 
 // Profiles table - detailed profile information
-export const profiles = pgTable("profiles", {
-  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
-  userId: uuid("user_id").notNull().unique().references(() => users.id, { onDelete: "cascade" }),
+export const profiles = sqliteTable("profiles", {
+  id: text("id").primaryKey(),
+  userId: text("user_id").notNull().unique().references(() => users.id, { onDelete: "cascade" }),
   name: text("name").notNull(),
   age: integer("age").notNull(),
   bio: text("bio"),
   gender: text("gender").notNull(), // 'man', 'woman', 'non-binary'
   lookingFor: text("looking_for").notNull(), // 'serious', 'casual', 'friends', 'unsure'
-  interests: jsonb("interests").$type<string[]>().default([]).notNull(),
-  photos: jsonb("photos").$type<string[]>().default([]).notNull(),
-  isVerified: boolean("is_verified").default(false).notNull(),
+  interests: text("interests", { mode: 'json' }).$type<string[]>().default(sql`'[]'`).notNull(),
+  photos: text("photos", { mode: 'json' }).$type<string[]>().default(sql`'[]'`).notNull(),
+  isVerified: integer("is_verified", { mode: 'boolean' }).default(false).notNull(),
   latitude: real("latitude"),
   longitude: real("longitude"),
   city: text("city"),
   maxDistance: integer("max_distance").default(50).notNull(), // km
   ageRangeMin: integer("age_range_min").default(18).notNull(),
   ageRangeMax: integer("age_range_max").default(99).notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  createdAt: integer("created_at", { mode: 'timestamp' }).default(sql`(unixepoch())`).notNull(),
+  updatedAt: integer("updated_at", { mode: 'timestamp' }).default(sql`(unixepoch())`).notNull(),
 });
 
 // Swipes table - track all swipe actions
-export const swipes = pgTable("swipes", {
-  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
-  swiperId: uuid("swiper_id").notNull().references(() => users.id, { onDelete: "cascade" }),
-  swipedId: uuid("swiped_id").notNull().references(() => users.id, { onDelete: "cascade" }),
-  isLike: boolean("is_like").notNull(), // true for like, false for dislike
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-}, (table) => ({
-  uniqueSwipe: sql`UNIQUE(${table.swiperId}, ${table.swipedId})`,
-  noSelfSwipe: sql`CHECK(${table.swiperId} != ${table.swipedId})`,
-}));
+export const swipes = sqliteTable("swipes", {
+  id: text("id").primaryKey(),
+  swiperId: text("swiper_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  swipedId: text("swiped_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  isLike: integer("is_like", { mode: 'boolean' }).notNull(), // true for like, false for dislike
+  createdAt: integer("created_at", { mode: 'timestamp' }).default(sql`(unixepoch())`).notNull(),
+});
 
 // Matches table - mutual likes
-export const matches = pgTable("matches", {
-  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
-  user1Id: uuid("user1_id").notNull().references(() => users.id, { onDelete: "cascade" }),
-  user2Id: uuid("user2_id").notNull().references(() => users.id, { onDelete: "cascade" }),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  lastMessageAt: timestamp("last_message_at"),
-}, (table) => ({
-  uniqueMatch: sql`UNIQUE(${table.user1Id}, ${table.user2Id})`,
-  noSelfMatch: sql`CHECK(${table.user1Id} != ${table.user2Id})`,
-  orderedUsers: sql`CHECK(${table.user1Id} < ${table.user2Id})`,
-}));
+export const matches = sqliteTable("matches", {
+  id: text("id").primaryKey(),
+  user1Id: text("user1_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  user2Id: text("user2_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  createdAt: integer("created_at", { mode: 'timestamp' }).default(sql`(unixepoch())`).notNull(),
+  lastMessageAt: integer("last_message_at", { mode: 'timestamp' }),
+});
 
 // Messages table - chat messages
-export const messages = pgTable("messages", {
-  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
-  matchId: uuid("match_id").notNull().references(() => matches.id, { onDelete: "cascade" }),
-  senderId: uuid("sender_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+export const messages = sqliteTable("messages", {
+  id: text("id").primaryKey(),
+  matchId: text("match_id").notNull().references(() => matches.id, { onDelete: "cascade" }),
+  senderId: text("sender_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   content: text("content").notNull(),
   messageType: text("message_type").default("text").notNull(), // 'text', 'voice', 'image'
   voiceUrl: text("voice_url"),
   voiceDuration: integer("voice_duration"), // seconds
-  isRead: boolean("is_read").default(false).notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
+  isRead: integer("is_read", { mode: 'boolean' }).default(false).notNull(),
+  createdAt: integer("created_at", { mode: 'timestamp' }).default(sql`(unixepoch())`).notNull(),
 });
 
 // Subscriptions table - VIP subscriptions
-export const subscriptions = pgTable("subscriptions", {
-  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
-  userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+export const subscriptions = sqliteTable("subscriptions", {
+  id: text("id").primaryKey(),
+  userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   planType: text("plan_type").notNull(), // 'monthly', 'yearly'
   amount: integer("amount").notNull(), // cents
   currency: text("currency").default("USD").notNull(),
   paypalSubscriptionId: text("paypal_subscription_id"),
   status: text("status").notNull(), // 'active', 'cancelled', 'expired'
-  startsAt: timestamp("starts_at").notNull(),
-  endsAt: timestamp("ends_at").notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  startsAt: integer("starts_at", { mode: 'timestamp' }).notNull(),
+  endsAt: integer("ends_at", { mode: 'timestamp' }).notNull(),
+  createdAt: integer("created_at", { mode: 'timestamp' }).default(sql`(unixepoch())`).notNull(),
+  updatedAt: integer("updated_at", { mode: 'timestamp' }).default(sql`(unixepoch())`).notNull(),
 });
 
 // Relations
