@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { queryClient } from "./lib/queryClient";
-import { QueryClientProvider } from "@tanstack/react-query";
+import { QueryClientProvider, useQuery } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Heart, MessageCircle } from "lucide-react";
@@ -36,7 +36,8 @@ interface Message {
   duration?: number;
 }
 
-function App() {
+// Inner App component that uses queries
+function AppContent() {
   const [appState, setAppState] = useState<AppState>('landing');
   const [activeTab, setActiveTab] = useState('discover');
   const [currentProfile, setCurrentProfile] = useState<Profile | null>(null);
@@ -44,16 +45,25 @@ function App() {
   const [isVIP, setIsVIP] = useState(false);
   const [currentChatProfile, setCurrentChatProfile] = useState<Profile | null>(null);
 
-  // Initialize with empty data - will be populated from backend/onboarding
-  const [profiles] = useState<Profile[]>([]);
+  // Real data from backend
   const [currentProfileIndex, setCurrentProfileIndex] = useState(0);
   const [matches] = useState<Profile[]>([]);
   const [likes] = useState<Profile[]>([]);
   const [messages] = useState<Message[]>([]);
 
+  // Load discovery profiles from API with proper typing
+  const { data: profilesData } = useQuery<{ profiles: Profile[] }>({
+    queryKey: ['/api/discovery'],
+    enabled: appState === 'main', // Only load when in main app
+  });
+
+  const profiles = profilesData?.profiles || [];
+
   useEffect(() => {
     if (profiles.length > 0) {
       setCurrentProfile(profiles[currentProfileIndex]);
+    } else {
+      setCurrentProfile(null);
     }
   }, [profiles, currentProfileIndex]);
 
@@ -218,51 +228,58 @@ function App() {
   };
 
   return (
+    <div className="min-h-screen bg-background">
+      {appState === 'landing' && (
+        <LandingPage onGetStarted={handleGetStarted} />
+      )}
+
+      {appState === 'onboarding' && (
+        <OnboardingFlow onComplete={handleOnboardingComplete} />
+      )}
+
+      {appState === 'main' && (
+        <>
+          {renderMainContent()}
+          <Navigation
+            activeTab={activeTab}
+            onTabChange={handleTabChange}
+            unreadMessages={3}
+            newMatches={2}
+          />
+        </>
+      )}
+
+      {appState === 'chat' && currentChatProfile && (
+        <ChatInterface
+          profile={currentChatProfile}
+          messages={messages}
+          currentUserId="currentUser"
+          onSendMessage={handleSendMessage}
+          onBack={() => {
+            setAppState('main');
+            setActiveTab('matches');
+            setCurrentChatProfile(null);
+          }}
+        />
+      )}
+
+      {appState === 'vip' && (
+        <VIPPage
+          onBack={() => setAppState('main')}
+          onSubscribe={handleVIPSubscribe}
+          isVIP={isVIP}
+        />
+      )}
+    </div>
+  );
+}
+
+// Main App component that provides QueryClient
+function App() {
+  return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <div className="min-h-screen bg-background">
-          {appState === 'landing' && (
-            <LandingPage onGetStarted={handleGetStarted} />
-          )}
-
-          {appState === 'onboarding' && (
-            <OnboardingFlow onComplete={handleOnboardingComplete} />
-          )}
-
-          {appState === 'main' && (
-            <>
-              {renderMainContent()}
-              <Navigation
-                activeTab={activeTab}
-                onTabChange={handleTabChange}
-                unreadMessages={3}
-                newMatches={2}
-              />
-            </>
-          )}
-
-          {appState === 'chat' && currentChatProfile && (
-            <ChatInterface
-              profile={currentChatProfile}
-              messages={messages}
-              currentUserId="currentUser"
-              onSendMessage={handleSendMessage}
-              onBack={() => {
-                setAppState('main');
-                setActiveTab('matches');
-                setCurrentChatProfile(null);
-              }}
-            />
-          )}
-
-          {appState === 'vip' && (
-            <VIPPage
-              onBack={() => setAppState('main')}
-              onSubscribe={handleVIPSubscribe}
-              isVIP={isVIP}
-            />
-          )}
-        </div>
+        <AppContent />
         <Toaster />
       </TooltipProvider>
     </QueryClientProvider>

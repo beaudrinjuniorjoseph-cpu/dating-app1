@@ -109,6 +109,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Discovery profiles endpoint
+  app.get("/api/discovery", async (req, res) => {
+    try {
+      // For now, use a hardcoded current user ID
+      // In a real implementation, this would come from authentication
+      const currentUserId = 'current-user';
+      const limit = parseInt(req.query.limit as string) || 10;
+      
+      const profiles = await storage.getDiscoveryProfiles(currentUserId, limit);
+      
+      // Transform to match frontend Profile interface
+      const transformedProfiles = profiles.map(profile => ({
+        id: profile.id,
+        name: profile.name,
+        age: profile.age,
+        distance: 5, // todo: calculate real distance based on location
+        bio: profile.bio || '',
+        interests: profile.interests,
+        photos: profile.photos,
+        isVerified: profile.isVerified
+      }));
+      
+      res.json({ profiles: transformedProfiles });
+    } catch (error) {
+      console.error("Error getting discovery profiles:", error);
+      res.status(500).json({ error: "Failed to get discovery profiles" });
+    }
+  });
+
   const httpServer = createServer(app);
 
   return httpServer;
